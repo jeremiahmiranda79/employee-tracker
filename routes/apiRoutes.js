@@ -12,7 +12,7 @@ const colors = {
     blue: '\x1b[34m%s\x1b[0m' 
 }
 
-function displayHeader(text) {
+function displayHeader(text, color) {
     let border = [];
 
     for (let i = 0; i < text.length + 2; i++) {
@@ -100,9 +100,8 @@ function addDepartment() {
                 console.log(colors.red, error);
                 return response.status(500).json({ error: error.message});
             }
-    
-            // console.log(displayHeader(colors.magenta, `New department '${answers.add_department}' added successfully!`))
-            console.log(colors.magenta, `New department '${answers.add_department}' added successfully!`); 
+
+            console.log(displayHeader(`New department '${answers.add_department}' added successfully!`))
             viewAllDepartments();
         })
     }) 
@@ -131,16 +130,76 @@ function createRoleList() {
     db.query('select * from role', (error, result) => {
         result.forEach(role => {
             let roleObject = {
-                title: role.title,
-                salary: role.salary,
-                department: role.department_id
-            }
+                name: role.title,
+                value: role.department_id
+            };
 
             roles.push(roleObject);
         })
     })
 
     return roles;
+}
+
+function createRoleList2() {
+    let roles = [];
+
+    db.query('select * from role', (error, result) => {
+        result.forEach(role => {
+            let roleObject = {
+                name: role.title,
+                value: role.department_id
+            };
+
+            roles.push(roleObject);
+        })
+    })
+
+    return roles;
+}
+
+function createManagerList() {
+    let managers = [];
+
+    let managersObjectEmpty = {
+        name: 'None',
+        value: null
+    }
+
+    managers.push(managersObjectEmpty);
+
+    db.query('select * from employee where manager_id is null', (error, result) => {
+        result.forEach(manager => {
+            let managersObject = {
+                name: manager.first_name,
+                value: manager.id
+            }
+
+            console.log(managersObject)
+            
+            managers.push(managersObject);
+        })
+    })
+
+    return managers;
+}
+
+function createEmployeeList() {
+    let employees = [];
+
+    db.query('select first_name, id from employee', (error, result) => {
+        result.forEach(employee => {
+            let employeeObject = {
+                name: employee.first_name,
+                value: null
+            };
+
+            console.log(employeeObject)
+            employees.push(employeeObject);
+        })
+    })
+
+    return employees;
 }
 
 function addRole() {
@@ -170,12 +229,12 @@ function addRole() {
                 return response.status(500).json({ error: error.message});
             }
 
-            displayHeader(`New role '${answers.role_title}' added successfully to ${answers.role_department}!`);
+            displayHeader(`New role '${answers.role_title}' added successfully!`);
             viewAllRoles();
         })
     })
 }
-/////
+
 function addEmployee() {
     const questions = [
         {
@@ -191,54 +250,45 @@ function addEmployee() {
         {
             type: 'list',
             name: 'role_id',
-            message: 'Enter an employee role id:',
-            choices: createDepartmentList()
+            message: 'Select a role:',
+            choices: createRoleList2()
         },
         {
-            type: 'input',
+            type: 'list',
             name: 'manager_id',
-            message: 'Enter an employee manager id:'
+            message: 'Enter a manager for role:',
+            choices: createManagerList()
         }
     ];
 
-    inquirer.prompt(questions).then((answers) => {
-        db.query(`insert into employee (first_name, last_name, role_id, manager_id) VALUES ("${answers.first_name}", "${answers.last_name}", "${answers.role_id}", "${answers.manager_id}")` , (error, results) => {
-            if (error) {
-                console.log(colors.red, error);
-                return response.status(500).json({ error: error.message});
-            }
+    inquirer.prompt(questions)
 
-            console.log(colors.magenta, `New employee '${answers.first_name} ${answers.last_name}' added successfully`);
-            viewAllEmployees();
-        });
-    })
+    // inquirer.prompt(questions).then((answers) => {
+    //     db.query(`insert into employee (first_name, last_name, role_id, manager_id) VALUES ("${answers.first_name}", "${answers.last_name}", "${answers.role_id}", "${answers.manager_id}")` , (error, results) => {
+    //         if (error) {
+    //             console.log(colors.red, error);
+    //             return response.status(500).json({ error: error.message});
+    //         }
+
+    //         displayHeader(`New employee '${answers.first_name} ${answers.last_name}' added successfully`)
+    //         viewAllEmployees();
+    //     });
+    // })
 }
 
 function updateEmployee() {
-    const question5 = [
+    // console.log('update emp list:' + createEmployeeList());
+
+    const questions = [
         {
-            type: 'input',
-            name: 'employee_first_name',
-            message: 'Select an employee:'
-        },
-        {
-            type: 'input',
-            name: 'employee_role',
-            message: 'Select a new role:'
+            type: 'list',
+            name: 'update_employee_list',
+            message: 'Update Employee Role:',
+            choices: createRoleList2()
         }
-    ];
+    ];  
 
-    inquirer.prompt(question5).then((answers) => {
-        db.query(`update employee set employee_role = ${answers.employee_role} where employee_name = ${answers.employee_first_name}`, (error, results) => {
-            if (error) {
-                console.log(red, error);
-                return response.status(500).json({ error: error.message });
-            }
-
-            console.log(colors.magenta, `Employee '${answers.first_name} ${answers.last_name}' updated successfully`);
-            viewAllEmployees();
-        });
-    })
+    inquirer.prompt(questions)
 }
 
 function exit() {
