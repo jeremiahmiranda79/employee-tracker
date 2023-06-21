@@ -28,7 +28,7 @@
   Run `npm start`.<br/> 
 
   ## Usage
-  Please check out the video demo: `https://drive.google.com/file/d/1Pro_eYJVLklb0bG9r8mCJkCtatfSXxBh/view`<br/>
+  Please check out the video demo: https://drive.google.com/file/d/1Pro_eYJVLklb0bG9r8mCJkCtatfSXxBh/view<br/>
   <br/>
   Use `node server` or `npm start` to begin the application.
 
