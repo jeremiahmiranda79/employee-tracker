@@ -7,6 +7,7 @@ VALUES
 
 INSERT INTO role (title, salary, department_id)
 VALUES 
+('Sales Lead', 100000, 1),
 ('Sales Person', 80000, 1),
 
 ('Lead Engineer', 150000, 2),
@@ -20,10 +21,11 @@ VALUES
 
 INSERT INTO employee (first_name, last_name, role_id)
 VALUES 
-('Mike', 'Chan', 1),
-('Ashley', 'Rodriguez', 2), 
-('Kevin', 'Tupik', 2), 
-('Kunal', 'Singh', 3), 
-('Malie', 'Brown', 3),
-('Sarah', 'Lourd', 4),
-('Tom', 'Allen', 4);
+('John', 'Doe', 1, null),
+('Mike', 'Chan', 2, 1),
+('Ashley', 'Rodriguez', 3, null), 
+('Kevin', 'Tupik', 4, 3), 
+('Kunal', 'Singh', 5, null), 
+('Malie', 'Brown', 6, 5),
+('Sarah', 'Lourd', 7, null),
+('Tom', 'Allen', 8, 7);

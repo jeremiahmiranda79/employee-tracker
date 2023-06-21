@@ -1,8 +1,10 @@
 const router = require('express').Router();
-const { response } = require('express');
+const response = require('express');
 const db = require('../db/connection');
 const inquirer = require('inquirer');
-//require('console.table');
+const logo = require('asciiart-logo');
+
+// https://drive.google.com/file/d/1Pro_eYJVLklb0bG9r8mCJkCtatfSXxBh/view
 
 const colors = { 
     magenta: '\x1b[35m%s\x1b[0m', 
@@ -20,9 +22,9 @@ function displayHeader(text, color) {
     }
 
     let newBorder = border.join('');
-    console.log(colors.blue, `┌${newBorder}┐`);
-    console.log(colors.blue, `│ ${text} │`);
-    console.log(colors.blue, `└${newBorder}┘`);
+    console.log(color, `┌${newBorder}┐`);
+    console.log(color, `│ ${text} │`);
+    console.log(color, `└${newBorder}┘`);
 }
 
 function viewAllDepartments() { 
@@ -31,11 +33,11 @@ function viewAllDepartments() {
 
     db.query(selectAllFromDepartmentByNameDecending, (error, results) => {
         if (error) {
-            console.log(red, error);
+            console.log(colors.red, error);
             return response.status(500).json({ error: error.message });
         }
 
-        displayHeader('Displaying all departments!');
+        displayHeader('Displaying all departments!', colors.magenta);
         console.table(results);   
         init();
     });
@@ -47,11 +49,11 @@ function viewAllRoles() {
 
     db.query(selectAllFromDepartment, (error, results) => {
         if (error) {
-            console.log(red, error);
+            console.log(colors.red, error);
             return response.status(500).json({ error: error.message });
         }
 
-        displayHeader('Displaying all roles!');
+        displayHeader('Displaying all roles!', colors.yellow);
         console.table(results);
         init();
     }); 
@@ -75,36 +77,14 @@ function viewAllEmployees() {
 
     db.query(selectAllFromEmployee, (error, results) => {
         if (error) {
-            console.log(red, error);
+            console.log(colors.red, error);
             return response.status(500).json({ error: error.message });
         }
 
-        displayHeader('Displaying all employees!');
+        displayHeader('Displaying all employees!', colors.blue);
         console.table(results);
         init();
     });
-}
-
-function addDepartment() {
-    const questions = [
-        {
-            type: 'input',
-            name: 'add_department',
-            message: 'Enter the department name:'
-        },
-    ];
-    
-    inquirer.prompt(questions).then((answers) => {
-        db.query(`insert into department (name) values ('${answers.add_department}');`, (error, results) => {
-            if (error) {
-                console.log(colors.red, error);
-                return response.status(500).json({ error: error.message});
-            }
-
-            console.log(displayHeader(`New department '${answers.add_department}' added successfully!`))
-            viewAllDepartments();
-        })
-    }) 
 }
 
 function createDepartmentList() {
@@ -131,24 +111,7 @@ function createRoleList() {
         result.forEach(role => {
             let roleObject = {
                 name: role.title,
-                value: role.department_id
-            };
-
-            roles.push(roleObject);
-        })
-    })
-
-    return roles;
-}
-
-function createRoleList2() {
-    let roles = [];
-
-    db.query('select * from role', (error, result) => {
-        result.forEach(role => {
-            let roleObject = {
-                name: role.title,
-                value: role.department_id
+                value: role.id
             };
 
             roles.push(roleObject);
@@ -171,12 +134,10 @@ function createManagerList() {
     db.query('select * from employee where manager_id is null', (error, result) => {
         result.forEach(manager => {
             let managersObject = {
-                name: manager.first_name,
+                name: manager.first_name + ' ' + manager.last_name,
                 value: manager.id
             }
 
-            console.log(managersObject)
-            
             managers.push(managersObject);
         })
     })
@@ -184,22 +145,45 @@ function createManagerList() {
     return managers;
 }
 
-function createEmployeeList() {
+function createEmployeeList(callBack) {
     let employees = [];
 
-    db.query('select first_name, id from employee', (error, result) => {
+    db.query('select first_name, last_name, id from employee', (error, result) => {
         result.forEach(employee => {
             let employeeObject = {
-                name: employee.first_name,
-                value: null
+                name: employee.first_name + ' ' + employee.last_name,
+                value: employee.id
             };
 
-            console.log(employeeObject)
             employees.push(employeeObject);
-        })
-    })
+        });
+
+        callBack(employees);
+    });
 
     return employees;
+}
+
+function addDepartment() {
+    const questions = [
+        {
+            type: 'input',
+            name: 'add_department',
+            message: 'Enter the department name:'
+        },
+    ];
+    
+    inquirer.prompt(questions).then((answers) => {
+        db.query(`insert into department (name) values ('${answers.add_department}');`, (error, results) => {
+            if (error) {
+                console.log(colors.red, error);
+                return response.status(500).json({ error: error.message});
+            } 
+
+            console.log(displayHeader(`New department '${answers.add_department}' added successfully!`, colors.magenta))
+            viewAllDepartments();
+        });
+    });
 }
 
 function addRole() {
@@ -229,10 +213,10 @@ function addRole() {
                 return response.status(500).json({ error: error.message});
             }
 
-            displayHeader(`New role '${answers.role_title}' added successfully!`);
+            displayHeader(`New role '${answers.role_title}' added successfully!`, colors.yellow);
             viewAllRoles();
-        })
-    })
+        });
+    });
 }
 
 function addEmployee() {
@@ -251,7 +235,7 @@ function addEmployee() {
             type: 'list',
             name: 'role_id',
             message: 'Select a role:',
-            choices: createRoleList2()
+            choices: createRoleList()
         },
         {
             type: 'list',
@@ -261,39 +245,84 @@ function addEmployee() {
         }
     ];
 
-    inquirer.prompt(questions)
+    inquirer.prompt(questions).then((answers) => {
+        db.query(`insert into employee (first_name, last_name, role_id, manager_id) VALUES ("${answers.first_name}", "${answers.last_name}", "${answers.role_id}", "${answers.manager_id}")` , (error, results) => {
+            if (error) {
+                console.log(colors.red, error);
+                return response.status(500).json({ error: error.message});
+            }
 
-    // inquirer.prompt(questions).then((answers) => {
-    //     db.query(`insert into employee (first_name, last_name, role_id, manager_id) VALUES ("${answers.first_name}", "${answers.last_name}", "${answers.role_id}", "${answers.manager_id}")` , (error, results) => {
-    //         if (error) {
-    //             console.log(colors.red, error);
-    //             return response.status(500).json({ error: error.message});
-    //         }
-
-    //         displayHeader(`New employee '${answers.first_name} ${answers.last_name}' added successfully`)
-    //         viewAllEmployees();
-    //     });
-    // })
+            displayHeader(`New employee '${answers.first_name} ${answers.last_name}' added successfully!`, colors.blue)
+            viewAllEmployees();
+        });
+    });
 }
 
 function updateEmployee() {
-    // console.log('update emp list:' + createEmployeeList());
+    function callBackPrompt(list) {
+        const questions = [
+            {
+                type: 'list',
+                name: 'employee_name',
+                message: 'Choose an Employee:',
+                choices: list
+            },
+            {
+                type: 'list',
+                name: 'employee_role',
+                message: 'Choose a new role:',
+                choices: createRoleList()
+            }
+        ];  
+ 
+        inquirer.prompt(questions).then((answers) => {
+            db.query(`update employee set role_id = ${answers.employee_role} where id = ${answers.employee_name}`, (error, results) => {
+                if (error) {
+                    console.log(colors.red, error);
+                    return response.status(500).json({ error: error.message});
+                }
+    
+                displayHeader(`Employee role updated successfully!`, colors.yellow)
+                viewAllEmployees();
+            });
+        });
+    };
 
-    const questions = [
-        {
-            type: 'list',
-            name: 'update_employee_list',
-            message: 'Update Employee Role:',
-            choices: createRoleList2()
-        }
-    ];  
-
-    inquirer.prompt(questions)
+    createEmployeeList(callBackPrompt);
 }
 
 function exit() {
-    console.log(red, 'Quit!!!');
+    displayHeader('Quit!!!', colors.red)
     process.exit(0);
+}
+
+function start() {
+    const text = 'Employee Manager'
+
+    console.log(
+        logo(
+            {
+                name: 'Employee Manager',
+                font: 'Speed',
+                lineChars: 10,
+                padding: 3,
+                margin: 0,
+                borderColor: 'yellow',
+                logoColor: 'bold-purple',
+                textColor: 'green',
+            }
+        )
+
+        .emptyLine()
+        .right('version 3.7.123')
+        .emptyLine()
+        .center(text)
+        .render()
+    );
+
+    displayHeader('Connected to the employees_ databsae!', colors.green);
+
+    init();
 }
 
 function init() {
@@ -334,11 +363,12 @@ function init() {
             case 'Exit?':
                 return exit();
             default:
-                console.log(red, 'answers.choice is empty!!!!');
-        }
+                console.log(colors.red, 'Answers choice is empty!!!!');
+                break;
+        };
     });
 };
 
-init();
+start();
 
 module.exports = router;
