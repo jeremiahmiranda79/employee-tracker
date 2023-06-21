@@ -5,6 +5,7 @@ const inquirer = require('inquirer');
 const logo = require('asciiart-logo');
 
 // https://drive.google.com/file/d/1Pro_eYJVLklb0bG9r8mCJkCtatfSXxBh/view
+// https://github.com/jeremiahmiranda79/employee-tracker
 
 const colors = { 
     magenta: '\x1b[35m%s\x1b[0m', 
